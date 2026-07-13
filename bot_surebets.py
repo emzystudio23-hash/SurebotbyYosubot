@@ -6,11 +6,10 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ==========================================
-# ⚠️ CAMBIA ESTO POR TU TOKEN DE @BotFather
+# ⚠️ COLOCA TU TOKEN REAL ENTRE LAS COMILLAS
 # ==========================================
 TOKEN_BOT = "TU_TELEGRAM_BOT_TOKEN_REAL"
 
-# Logs configurados para mostrarse en tiempo real en la consola de Railway
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", 
     level=logging.INFO,
@@ -51,11 +50,10 @@ def calcular_surebet(cuota_1, cuota_2):
     return False, 0
 
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.info("Comando /start recibido correctamente.")
+    logger.info("Comando /start recibido.")
     usuario = update.effective_user.first_name
     texto = (
         f"👋 ¡Hola {usuario}! Bienvenido al **MVP de Arbitraje Deportivo**.\n\n"
-        f"Este bot está diseñado al estilo de BetBurger para enviarte Surebets en España.\n\n"
         f"⚡ **Estado del Escáner:** {'🟢 ACTIVO' if escanner_activo else '🔴 APAGADO'}"
     )
     botones = [
@@ -111,13 +109,13 @@ async def bucle_escaneo(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
         await asyncio.sleep(4)
 
 def main():
-    logger.info("Iniciando aplicación...")
+    logger.info("Iniciando aplicación del bot...")
     application = Application.builder().token(TOKEN_BOT).build()
     
     application.add_handler(CommandHandler("start", comando_start))
     application.add_handler(CallbackQueryHandler(manejar_botones))
     
-    logger.info("Polling iniciado con éxito. Esperando mensajes...")
+    logger.info("Polling de mensajes activo...")
     application.run_polling(close_loop=False)
 
 if __name__ == "__main__":
