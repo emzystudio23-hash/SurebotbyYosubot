@@ -6,15 +6,15 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ==========================================
-# ⚠️ COLOCA TU TOKEN REAL EN LA LÍNEA DE ABAJO
+# ⚠️ CAMBIA ESTO POR TU TOKEN DE @BotFather
 # ==========================================
-TOKEN_BOT = "TU_TELEGRAM_BOT_TOKEN_REAL" 
+TOKEN_BOT = "TU_TELEGRAM_BOT_TOKEN_REAL"
 
-# Configuración de logs para Railway
+# Logs configurados para mostrarse en tiempo real en la consola de Railway
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", 
     level=logging.INFO,
-    handlers=[logging.StreamHandler(sys.stdout)]
+    stream=sys.stdout
 )
 logger = logging.getLogger(__name__)
 
@@ -51,10 +51,11 @@ def calcular_surebet(cuota_1, cuota_2):
     return False, 0
 
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.info("Comando /start recibido.")
+    logger.info("Comando /start recibido correctamente.")
     usuario = update.effective_user.first_name
     texto = (
         f"👋 ¡Hola {usuario}! Bienvenido al **MVP de Arbitraje Deportivo**.\n\n"
+        f"Este bot está diseñado al estilo de BetBurger para enviarte Surebets en España.\n\n"
         f"⚡ **Estado del Escáner:** {'🟢 ACTIVO' if escanner_activo else '🔴 APAGADO'}"
     )
     botones = [
@@ -82,7 +83,7 @@ async def manejar_botones(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             )
             asyncio.create_task(bucle_escaneo(context, chat_id))
         else:
-            await query.edit_message_text("⚠️ El escáner ya está corriendo actualmente.")
+            await query.edit_message_text("⚠️ El escáner ya está activo.")
     elif query.data == "detener":
         escanner_activo = False
         await query.edit_message_text("🔴 **Escáner Detenido.**")
@@ -110,21 +111,14 @@ async def bucle_escaneo(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
         await asyncio.sleep(4)
 
 def main():
-    logger.info("Iniciando aplicación del bot...")
+    logger.info("Iniciando aplicación...")
+    application = Application.builder().token(TOKEN_BOT).build()
     
-    if "REAL" in TOKEN_BOT or not TOKEN_BOT:
-        logger.error("❌ ERROR CRÍTICO: No has cambiado 'TU_TELEGRAM_BOT_TOKEN_REAL' por tu token de @BotFather.")
-        return
-
-    try:
-        application = Application.builder().token(TOKEN_BOT).build()
-        application.add_handler(CommandHandler("start", comando_start))
-        application.add_handler(CallbackQueryHandler(manejar_botones))
-        
-        logger.info("Bot configurado correctamente. Iniciando polling...")
-        application.run_polling()
-    except Exception as e:
-        logger.error(f"❌ ERROR AL INICIAR EL BOT: {e}")
+    application.add_handler(CommandHandler("start", comando_start))
+    application.add_handler(CallbackQueryHandler(manejar_botones))
+    
+    logger.info("Polling iniciado con éxito. Esperando mensajes...")
+    application.run_polling(close_loop=False)
 
 if __name__ == "__main__":
     main()
