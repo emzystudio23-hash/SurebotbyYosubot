@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import random
+import sys
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -9,10 +10,11 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 # ==========================================
 TOKEN_BOT = "TU_TELEGRAM_BOT_TOKEN_REAL" 
 
-# Configuración básica de logs para Railway
+# Configuración de logs para Railway
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", 
-    level=logging.INFO
+    level=logging.INFO,
+    handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ def calcular_surebet(cuota_1, cuota_2):
     return False, 0
 
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.info("Comando /start recibido de un usuario.")
+    logger.info("Comando /start recibido.")
     usuario = update.effective_user.first_name
     texto = (
         f"👋 ¡Hola {usuario}! Bienvenido al **MVP de Arbitraje Deportivo**.\n\n"
@@ -109,13 +111,20 @@ async def bucle_escaneo(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
 
 def main():
     logger.info("Iniciando aplicación del bot...")
-    application = Application.builder().token(TOKEN_BOT).build()
     
-    application.add_handler(CommandHandler("start", comando_start))
-    application.add_handler(CallbackQueryHandler(manejar_botones))
-    
-    logger.info("Bot configurado. Iniciando polling continuo...")
-    application.run_polling()
+    if "REAL" in TOKEN_BOT or not TOKEN_BOT:
+        logger.error("❌ ERROR CRÍTICO: No has cambiado 'TU_TELEGRAM_BOT_TOKEN_REAL' por tu token de @BotFather.")
+        return
+
+    try:
+        application = Application.builder().token(TOKEN_BOT).build()
+        application.add_handler(CommandHandler("start", comando_start))
+        application.add_handler(CallbackQueryHandler(manejar_botones))
+        
+        logger.info("Bot configurado correctamente. Iniciando polling...")
+        application.run_polling()
+    except Exception as e:
+        logger.error(f"❌ ERROR AL INICIAR EL BOT: {e}")
 
 if __name__ == "__main__":
     main()
