@@ -2,13 +2,12 @@ import logging
 import asyncio
 import random
 import sys
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# ==========================================
-# ⚠️ ADVERTENCIA: PON TU TOKEN REAL AQUÍ
-# ==========================================
-TOKEN_BOT = "TU_TELEGRAM_BOT_TOKEN_REAL"
+# Lee el token automáticamente desde el panel de control de Railway
+TOKEN_BOT = os.getenv("TELEGRAM_TOKEN")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", 
@@ -34,7 +33,6 @@ async def obtener_datos_reales_de_api():
     return {
         "evento": f"{partido['home']} vs {partido['away']}",
         "deporte": partido["sport"],
-        "mercado": "Ganador del Partido",
         "casa_a": casa1,
         "cuota_a": cuota_a,
         "casa_b": casa2,
@@ -101,13 +99,16 @@ async def bucle_escaneo(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
 
 def main():
     logger.info("Iniciando aplicación del bot...")
-    application = Application.builder().token(TOKEN_BOT).build()
     
+    if not TOKEN_BOT:
+        logger.error("❌ ERROR: La variable de entorno TELEGRAM_TOKEN no está configurada en Railway.")
+        return
+
+    application = Application.builder().token(TOKEN_BOT).build()
     application.add_handler(CommandHandler("start", comando_start))
     application.add_handler(CallbackQueryHandler(manejar_botones))
     
     logger.info("Bot listo. Iniciando polling...")
-    # Ejecución directa compatible con v21+
     application.run_polling()
 
 if __name__ == "__main__":
