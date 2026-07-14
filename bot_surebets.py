@@ -6,9 +6,10 @@ import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# Lee el token automáticamente desde el panel de control de Railway
+# Lee el token automáticamente desde el panel de control de Railway de forma segura
 TOKEN_BOT = os.getenv("TELEGRAM_TOKEN")
 
+# Configuración de Logs visibles en la consola de Railway
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", 
     level=logging.INFO,
@@ -33,6 +34,7 @@ async def obtener_datos_reales_de_api():
     return {
         "evento": f"{partido['home']} vs {partido['away']}",
         "deporte": partido["sport"],
+        "mercado": "Ganador del Partido",
         "casa_a": casa1,
         "cuota_a": cuota_a,
         "casa_b": casa2,
@@ -101,14 +103,22 @@ def main():
     logger.info("Iniciando aplicación del bot...")
     
     if not TOKEN_BOT:
-        logger.error("❌ ERROR: La variable de entorno TELEGRAM_TOKEN no está configurada en Railway.")
+        logger.error("❌ ERROR CRÍTICO: La variable de entorno TELEGRAM_TOKEN no está configurada o está vacía en Railway.")
         return
 
-    application = Application.builder().token(TOKEN_BOT).build()
+    # Construcción de la app optimizada con tiempos de espera ampliados contra caídas de red (TimedOut)
+    application = (
+        Application.builder()
+        .token(TOKEN_BOT)
+        .connect_timeout(30.0)
+        .read_timeout(30.0)
+        .build()
+    )
+    
     application.add_handler(CommandHandler("start", comando_start))
     application.add_handler(CallbackQueryHandler(manejar_botones))
     
-    logger.info("Bot listo. Iniciando polling...")
+    logger.info("Bot listo. Iniciando polling estable...")
     application.run_polling()
 
 if __name__ == "__main__":
