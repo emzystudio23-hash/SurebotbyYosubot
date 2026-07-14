@@ -6,7 +6,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ==========================================
-# ⚠️ COLOCA TU TOKEN REAL ENTRE LAS COMILLAS
+# ⚠️ ADVERTENCIA: PON TU TOKEN REAL AQUÍ
 # ==========================================
 TOKEN_BOT = "TU_TELEGRAM_BOT_TOKEN_REAL"
 
@@ -23,10 +23,9 @@ async def obtener_datos_reales_de_api():
     partidos_mock = [
         {"home": "Real Madrid", "away": "Barcelona", "sport": "Fútbol - LaLiga"},
         {"home": "Carlos Alcaraz", "away": "Novak Djokovic", "sport": "Tenis - Wimbledon"},
-        {"home": "Atlético de Madrid", "away": "Sevilla", "sport": "Fútbol - LaLiga"},
-        {"home": "Baskonia", "away": "Real Madrid Basket", "sport": "Baloncesto - ACB"}
+        {"home": "Atlético de Madrid", "away": "Sevilla", "sport": "Fútbol - LaLiga"}
     ]
-    casas_mock = ["Bet365", "Codere", "William Hill", "888Sport", "Bwin", "Luckia"]
+    casas_mock = ["Bet365", "Codere", "William Hill"]
     partido = random.choice(partidos_mock)
     casa1, casa2 = random.sample(casas_mock, 2)
     cuota_a = round(random.uniform(2.10, 2.40), 2)
@@ -60,8 +59,7 @@ async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         [
             InlineKeyboardButton("▶️ Iniciar Escáner", callback_data="iniciar"),
             InlineKeyboardButton("🛑 Detener Escáner", callback_data="detener")
-        ],
-        [InlineKeyboardButton("📊 Ver Estado", callback_data="estado")]
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(botones)
     await update.message.reply_text(texto, parse_mode="Markdown", reply_markup=reply_markup)
@@ -80,14 +78,9 @@ async def manejar_botones(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 parse_mode="Markdown"
             )
             asyncio.create_task(bucle_escaneo(context, chat_id))
-        else:
-            await query.edit_message_text("⚠️ El escáner ya está activo.")
     elif query.data == "detener":
         escanner_activo = False
         await query.edit_message_text("🔴 **Escáner Detenido.**")
-    elif query.data == "estado":
-        estado = "🟢 Ejecutándose..." if escanner_activo else "🔴 Pausado."
-        await query.message.reply_text(f"ℹ️ **Estado actual:** {estado}", parse_mode="Markdown")
 
 async def bucle_escaneo(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     global escanner_activo
@@ -99,11 +92,9 @@ async def bucle_escaneo(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
                 f"⚡️ **¡SUREBET DETECTADA!** ⚡️\n"
                 f"📈 **Beneficio Neto:** `{beneficio:.2f}%`\n"
                 f"🏆 **Deporte:** {datos['deporte']}\n"
-                f"⚽️ **Evento:** {datos['evento']}\n"
-                f"📊 **Mercado:** {datos['mercado']}\n\n"
+                f"⚽️ **Evento:** {datos['evento']}\n\n"
                 f"1️⃣ **Opción A:** {datos['casa_a']} ➔ `{datos['cuota_a']}`\n"
-                f"2️⃣ **Opción B:** {datos['casa_b']} ➔ `{datos['cuota_b']}`\n\n"
-                f"📱 _Estilo BetBurger Spain_"
+                f"2️⃣ **Opción B:** {datos['casa_b']} ➔ `{datos['cuota_b']}`\n"
             )
             await context.bot.send_message(chat_id=chat_id, text=alerta_formateada, parse_mode="Markdown")
         await asyncio.sleep(4)
@@ -115,8 +106,9 @@ def main():
     application.add_handler(CommandHandler("start", comando_start))
     application.add_handler(CallbackQueryHandler(manejar_botones))
     
-    logger.info("Polling de mensajes activo...")
-    application.run_polling(close_loop=False)
+    logger.info("Bot listo. Iniciando polling...")
+    # Ejecución directa compatible con v21+
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
